@@ -1,0 +1,11 @@
+a[class*="SocialLogin-button"] {
+    color: #fff;
+}
+
+.SocialLogin-button-facebook {
+    background-color: #4267b2;
+}
+
+.SocialLogin-button-google {
+    background-color: #ea4335;
+}
