@@ -6,9 +6,9 @@ return [
 	'version'     => '1.0.0',
 	'title'       => 'sl-plugin-title',
 	'description' => 'sl-plugin-desc',
-	'author'      => 'Mai vu',
-	'authorEmail' => 'rainy@joomtech.net',
-	'authorUrl'   => 'https://www.joomtech.net',
+	'author'      => 'Mai Vu',
+	'authorEmail' => 'mvanvu@gmail.com',
+	'authorUrl'   => 'https://github.com/mvanvu',
 	'updateUrl'   => null,
 	'params'      => [
 		[

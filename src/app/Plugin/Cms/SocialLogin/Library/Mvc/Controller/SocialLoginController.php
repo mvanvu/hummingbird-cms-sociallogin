@@ -28,12 +28,14 @@ class SocialLoginController extends Controller
 
 		if (!isset($plugins['Cms'][$plgClass]))
 		{
-			return $dispatcher->forward(
+			$dispatcher->forward(
 				[
 					'controller' => 'error',
 					'action'     => 'show',
 				]
 			);
+
+			return false;
 		}
 
 		$this->pluginHandler = Event::getHandler($plgClass, $plugins['Cms'][$plgClass]);
@@ -131,7 +133,7 @@ class SocialLoginController extends Controller
 				}
 			}
 
-			if ($newUser->save($userData))
+			if ($newUser->assign($userData)->save())
 			{
 				CmsUser::getInstance($newUser)->setActive();
 			}
@@ -151,7 +153,7 @@ class SocialLoginController extends Controller
 		}
 		catch (FacebookSDKException $e)
 		{
-			return $this->dispatcher->forward(
+			$this->dispatcher->forward(
 				[
 					'controller' => 'error',
 					'action'     => 'show',
@@ -162,13 +164,15 @@ class SocialLoginController extends Controller
 					],
 				]
 			);
+
+			return false;
 		}
 
 		if (empty($accessToken))
 		{
 			if ($helper->getError())
 			{
-				return $this->dispatcher->forward(
+				$this->dispatcher->forward(
 					[
 						'controller' => 'error',
 						'action'     => 'show',
@@ -179,14 +183,18 @@ class SocialLoginController extends Controller
 						],
 					]
 				);
+
+				return false;
 			}
 
-			return $this->dispatcher->forward(
+			$this->dispatcher->forward(
 				[
 					'controller' => 'error',
 					'action'     => 'show',
 				]
 			);
+
+			return false;
 		}
 
 		$oAuth2Client  = $fb->getOAuth2Client();
@@ -208,7 +216,7 @@ class SocialLoginController extends Controller
 		}
 		catch (FacebookSDKException $e)
 		{
-			return $this->dispatcher->forward(
+			$this->dispatcher->forward(
 				[
 					'controller' => 'error',
 					'action'     => 'show',
@@ -218,6 +226,8 @@ class SocialLoginController extends Controller
 					],
 				]
 			);
+
+			return false;
 		}
 
 		return $this->response->redirect($redirect);
