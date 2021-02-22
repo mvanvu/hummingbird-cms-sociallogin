@@ -2,7 +2,6 @@
 
 namespace App\Plugin\Cms;
 
-use App\Helper\Asset;
 use App\Helper\Console;
 use App\Helper\State;
 use App\Helper\Text;
