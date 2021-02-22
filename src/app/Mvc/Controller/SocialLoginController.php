@@ -47,6 +47,7 @@ class SocialLoginController extends Controller
 			return $this->response->redirect($redirect, true);
 		}
 
+		require_once PLUGIN_PATH . '/Cms/SocialLogin/vendor/autoload.php';
 		$config   = $this->pluginHandler->getConfig();
 		$provider = $this->dispatcher->getParam('provider');
 

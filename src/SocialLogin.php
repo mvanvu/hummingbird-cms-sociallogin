@@ -26,21 +26,22 @@ class SocialLogin extends Plugin
 		$fbLogin    = $this->config->get('params.facebookLogin') === 'Y';
 		$ggLogin    = $this->config->get('params.googleLogin') === 'Y';
 
-		if ($fbLogin)
-		{
-			$fbLoginUrl = $this->getFBConnection()
-				->getRedirectLoginHelper()
-				->getLoginUrl($this->getCallBackUrl('fb'), ['public_profile', 'email']);
-		}
-
-		if ($ggLogin)
-		{
-			$ggLoginUrl = $this->getGGConnection()->createAuthUrl();
-		}
-
 		if ($fbLogin || $ggLogin)
 		{
+			require_once PLUGIN_PATH . '/Cms/SocialLogin/vendor/autoload.php';
 			$this->addAssets('css/social-login.css');
+
+			if ($fbLogin)
+			{
+				$fbLoginUrl = $this->getFBConnection()
+					->getRedirectLoginHelper()
+					->getLoginUrl($this->getCallBackUrl('fb'), ['public_profile', 'email']);
+			}
+
+			if ($ggLogin)
+			{
+				$ggLoginUrl = $this->getGGConnection()->createAuthUrl();
+			}
 
 			return $this->getRenderer()
 				->getPartial('social-login-buttons',
