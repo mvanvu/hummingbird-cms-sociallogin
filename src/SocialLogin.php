@@ -1,56 +1,19 @@
 <?php
 
-namespace MaiVu\Hummingbird\Plugin\Cms\SocialLogin;
+namespace App\Plugin\Cms;
 
-use Phalcon\Mvc\Router;
+use App\Helper\Asset;
+use App\Helper\Console;
+use App\Helper\State;
+use App\Helper\Text;
+use App\Helper\Uri;
+use App\Plugin\Plugin;
 use Facebook\Facebook;
 use Google_Client;
-use MaiVu\Hummingbird\Lib\Helper\Asset;
-use MaiVu\Hummingbird\Lib\Helper\State;
-use MaiVu\Hummingbird\Lib\Helper\Uri;
-use MaiVu\Hummingbird\Lib\Helper\Text;
-use MaiVu\Hummingbird\Lib\Plugin;
+use Phalcon\Mvc\Router;
 
 class SocialLogin extends Plugin
 {
-	public function onConstruct()
-	{
-		require_once __DIR__ . '/vendor/autoload.php';
-		Asset::addFiles(
-			[
-				__DIR__ . '/Asset/Css/social-login.css',
-				__DIR__ . '/Asset/Js/social-login.js',
-			]
-		);
-	}
-
-	public function getFBConnection()
-	{
-		return new Facebook(
-			[
-				'app_id'     => $this->config->get('params.facebookAppId'),
-				'app_secret' => $this->config->get('params.facebookAppSecret'),
-			]
-		);
-	}
-
-	public function getCallBackUrl($prefix)
-	{
-		return Uri::getHost() . '/social-login/' . $prefix . '-callback/';
-	}
-
-	public function getGGConnection()
-	{
-		$client = new Google_Client();
-		$client->setClientId($this->config->get('params.googleClientId'));
-		$client->setClientSecret($this->config->get('params.googleClientSecret'));
-		$client->setRedirectUri($this->getCallBackUrl('gg'));
-		$client->addScope('email');
-		$client->addScope('profile');
-
-		return $client;
-	}
-
 	public function onAfterLoginForm()
 	{
 		State::set('socialLoginUriParams',
@@ -78,8 +41,10 @@ class SocialLogin extends Plugin
 
 		if ($fbLogin || $ggLogin)
 		{
+			$this->addAssets('css/social-login.css');
+
 			return $this->getRenderer()
-				->getPartial('social.login.buttons',
+				->getPartial('social-login-buttons',
 					[
 						'pluginConfig' => $this->config,
 						'fbLoginUrl'   => $fbLoginUrl,
@@ -89,7 +54,34 @@ class SocialLogin extends Plugin
 		}
 	}
 
-	public function onBeforeServiceSetRouter(Router $router)
+	public function getFBConnection()
+	{
+		return new Facebook(
+			[
+				'app_id'     => $this->config->get('params.facebookAppId'),
+				'app_secret' => $this->config->get('params.facebookAppSecret'),
+			]
+		);
+	}
+
+	public function getCallBackUrl($prefix)
+	{
+		return Uri::getHost() . '/social-login/' . $prefix . '-callback/';
+	}
+
+	public function getGGConnection()
+	{
+		$client = new Google_Client;
+		$client->setClientId($this->config->get('params.googleClientId'));
+		$client->setClientSecret($this->config->get('params.googleClientSecret'));
+		$client->setRedirectUri($this->getCallBackUrl('gg'));
+		$client->addScope('email');
+		$client->addScope('profile');
+
+		return $client;
+	}
+
+	public function onInitRouter(Router $router)
 	{
 		$router->add('/social-login/fb-callback/:params',
 			[
@@ -108,5 +100,10 @@ class SocialLogin extends Plugin
 				'params'     => 1,
 			]
 		);
+	}
+
+	public function install()
+	{
+		Console::getInstance()->composer('install', __DIR__);
 	}
 }

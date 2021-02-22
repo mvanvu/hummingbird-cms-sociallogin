@@ -1,20 +1,20 @@
 <?php
 
-namespace MaiVu\Hummingbird\Lib\Mvc\Controller;
+namespace App\Mvc\Controller;
 
-use Phalcon\Mvc\Controller;
-use Phalcon\Mvc\Dispatcher;
+use App\Helper\Config;
+use App\Helper\Event;
+use App\Helper\State;
+use App\Helper\Text;
+use App\Helper\Uri;
+use App\Helper\User as Auth;
+use App\Mvc\Model\User as UserModel;
+use App\Plugin\Cms\SocialLogin;
 use Facebook\Exceptions\FacebookSDKException;
 use Google_Service_Oauth2;
 use Google_Service_Oauth2_Userinfoplus;
-use MaiVu\Hummingbird\Lib\Helper\Config;
-use MaiVu\Hummingbird\Lib\Helper\State;
-use MaiVu\Hummingbird\Lib\Helper\Event;
-use MaiVu\Hummingbird\Lib\Helper\Text;
-use MaiVu\Hummingbird\Lib\Helper\Uri;
-use MaiVu\Hummingbird\Plugin\Cms\SocialLogin\SocialLogin;
-use MaiVu\Hummingbird\Lib\Helper\User as CmsUser;
-use MaiVu\Hummingbird\Lib\Mvc\Model\User as UserModel;
+use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Dispatcher;
 
 class SocialLoginController extends Controller
 {
@@ -23,10 +23,7 @@ class SocialLoginController extends Controller
 
 	public function beforeExecuteRoute(Dispatcher $dispatcher)
 	{
-		$plugins  = Event::getPlugins();
-		$plgClass = SocialLogin::class;
-
-		if (!isset($plugins['Cms'][$plgClass]))
+		if (!($plugin = Event::getPlugin('Cms', 'SocialLogin')))
 		{
 			$dispatcher->forward(
 				[
@@ -38,19 +35,32 @@ class SocialLoginController extends Controller
 			return false;
 		}
 
-		$this->pluginHandler = Event::getHandler($plgClass, $plugins['Cms'][$plgClass]);
+		$this->pluginHandler = Event::getHandler($plugin);
 	}
 
-	protected function findUserByEmail($email)
+	public function callbackAction()
 	{
-		return UserModel::findFirst(
-			[
-				'conditions' => 'email = :email:',
-				'bind'       => [
-					'email' => $email,
-				],
-			]
-		);
+		$redirect = $this->getRedirectUri();
+
+		if (!Auth::is('guest'))
+		{
+			return $this->response->redirect($redirect, true);
+		}
+
+		$config   = $this->pluginHandler->getConfig();
+		$provider = $this->dispatcher->getParam('provider');
+
+		if ($provider === 'facebook' && $config->get('params.facebookLogin') === 'Y')
+		{
+			return $this->fbCallback();
+		}
+
+		if ($provider === 'google' && $config->get('params.googleLogin') === 'Y')
+		{
+			return $this->ggCallback();
+		}
+
+		return $this->response->redirect($redirect, true);
 	}
 
 	protected function getRedirectUri()
@@ -73,71 +83,6 @@ class SocialLoginController extends Controller
 		}
 
 		return $uri->toString(false);
-	}
-
-	protected function login($id, $name, $email)
-	{
-		if ($user = $this->findUserByEmail($email))
-		{
-			if ($user->active === 'Y')
-			{
-				CmsUser::getInstance($user)->setActive();
-			}
-			else
-			{
-				$this->flashSession->error(Text::_('sl-user-was-banned-msg', ['email' => $email]));
-			}
-		}
-		else
-		{
-			State::setMark('user.registering', true);
-			$newUser  = new UserModel;
-			$userData = [
-				'id'       => 0,
-				'name'     => $name,
-				'email'    => $email,
-				'username' => $email,
-				'password' => $this->security->hash($id . ':' . $name . ':' . $email),
-				'role'     => 'R',
-				'active'   => 'Y',
-				'token'    => null,
-				'params'   => [
-					'timezone' => Config::get('timezone', 'UTC'),
-					'avatar'   => '',
-				],
-			];
-
-			$params = [
-				'conditions' => 'username = :username:',
-				'bind'       => [
-					'username' => $userData['username'],
-				],
-			];
-
-			if (UserModel::findFirst($params))
-			{
-				$parts                      = explode('@', $userData['username']);
-				$userData['username']       = $parts[0];
-				$params['bind']['username'] = $userData['username'];
-
-				if (UserModel::findFirst($params))
-				{
-					$pattern                    = '/[\x00-\x1F\x7F<>"\'%&]/';
-					$userData['username']       = preg_replace($pattern, '', $userData['name']);
-					$params['bind']['username'] = $userData['username'];
-
-					if (UserModel::findFirst($params))
-					{
-						$userData['username'] .= $id;
-					}
-				}
-			}
-
-			if ($newUser->assign($userData)->save())
-			{
-				CmsUser::getInstance($newUser)->setActive();
-			}
-		}
 	}
 
 	protected function fbCallback()
@@ -233,6 +178,83 @@ class SocialLoginController extends Controller
 		return $this->response->redirect($redirect);
 	}
 
+	protected function login($id, $name, $email)
+	{
+		if ($user = $this->findUserByEmail($email))
+		{
+			if ($user->active === 'Y')
+			{
+				Auth::getInstance($user)->setActive();
+			}
+			else
+			{
+				$this->flashSession->error(Text::_('sl-user-was-banned-msg', ['email' => $email]));
+			}
+		}
+		else
+		{
+			State::setMark('user.registering', true);
+			$newUser  = new UserModel;
+			$userData = [
+				'id'       => 0,
+				'name'     => $name,
+				'email'    => $email,
+				'username' => $email,
+				'password' => $this->security->hash($id . ':' . $name . ':' . $email),
+				'role'     => 'R',
+				'active'   => 'Y',
+				'token'    => null,
+				'params'   => [
+					'timezone' => Config::get('timezone', 'UTC'),
+					'avatar'   => '',
+				],
+			];
+
+			$params = [
+				'conditions' => 'username = :username:',
+				'bind'       => [
+					'username' => $userData['username'],
+				],
+			];
+
+			if (UserModel::findFirst($params))
+			{
+				$parts                      = explode('@', $userData['username']);
+				$userData['username']       = $parts[0];
+				$params['bind']['username'] = $userData['username'];
+
+				if (UserModel::findFirst($params))
+				{
+					$pattern                    = '/[\x00-\x1F\x7F<>"\'%&]/';
+					$userData['username']       = preg_replace($pattern, '', $userData['name']);
+					$params['bind']['username'] = $userData['username'];
+
+					if (UserModel::findFirst($params))
+					{
+						$userData['username'] .= $id;
+					}
+				}
+			}
+
+			if ($newUser->assign($userData)->save())
+			{
+				Auth::getInstance($newUser)->setActive();
+			}
+		}
+	}
+
+	protected function findUserByEmail($email)
+	{
+		return UserModel::findFirst(
+			[
+				'conditions' => 'email = :email:',
+				'bind'       => [
+					'email' => $email,
+				],
+			]
+		);
+	}
+
 	protected function ggCallback()
 	{
 		$gg    = $this->pluginHandler->getGGConnection();
@@ -253,30 +275,5 @@ class SocialLoginController extends Controller
 		}
 
 		return $this->response->redirect($this->getRedirectUri(), true);
-	}
-
-	public function callbackAction()
-	{
-		$redirect = $this->getRedirectUri();
-
-		if (!CmsUser::getInstance()->isGuest())
-		{
-			return $this->response->redirect($redirect, true);
-		}
-
-		$config   = $this->pluginHandler->getConfig();
-		$provider = $this->dispatcher->getParam('provider');
-
-		if ($provider === 'facebook' && $config->get('params.facebookLogin') === 'Y')
-		{
-			return $this->fbCallback();
-		}
-
-		if ($provider === 'google' && $config->get('params.googleLogin') === 'Y')
-		{
-			return $this->ggCallback();
-		}
-
-		return $this->response->redirect($redirect, true);
 	}
 }

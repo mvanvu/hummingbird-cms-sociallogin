@@ -2,7 +2,7 @@
 
 return [
 	'sl-plugin-title'        => 'Đăng nhập bằng Facebook, Google',
-	'sl-plugin-desc'         => 'Đăng nhập bằng tài khoản Facebook và Google',
+	'sl-plugin-desc'         => 'Đăng nhập bằng tài khoản Facebook hoặc Google',
 	'sl-or-login-with'       => 'hoặc đăng nhập bằng',
 	'sl-facebook'            => 'Facebook',
 	'sl-google'              => 'Google',

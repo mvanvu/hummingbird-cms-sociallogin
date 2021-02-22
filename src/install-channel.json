@@ -1,0 +1,16 @@
+{
+  "name": "SocialLogin",
+  "group": "Cms",
+  "author": "Mai Vu",
+  "authorUrl": "https://github.com/mvanvu",
+  "title": {
+    "en-GB": "Login with Facebook or Google account (Official)",
+    "vi-VN": "Đăng nhập Facebook hoặc Google (Chính hãng)"
+  },
+  "description": {
+    "en-GB": "A social (Facebook or Google account) login solution for Hummingbird CMS!",
+    "vi-VN": "Đăng nhập bằng tài khoản Facebook hoặc Google"
+  },
+  "version": "1.0",
+  "source": "https://github.com/mvanvu/hummingbird-cms-sociallogin/archive/1.0.zip"
+}
