@@ -23,6 +23,7 @@ return [
 			'type'    => 'Text',
 			'label'   => 'sl-fb-app-id',
 			'filters' => ['string', 'trim'],
+			'class'   => 'uk-input',
 			'showOn'  => 'facebookLogin:Y',
 		],
 		[
@@ -30,6 +31,7 @@ return [
 			'type'    => 'Text',
 			'label'   => 'sl-fb-app-secret',
 			'filters' => ['string', 'trim'],
+			'class'   => 'uk-input',
 			'showOn'  => 'facebookLogin:Y',
 		],
 		[
@@ -44,6 +46,7 @@ return [
 			'type'    => 'Text',
 			'label'   => 'sl-gg-client-id',
 			'filters' => ['string', 'trim'],
+			'class'   => 'uk-input',
 			'showOn'  => 'googleLogin:Y',
 		],
 		[
@@ -51,6 +54,7 @@ return [
 			'type'    => 'Text',
 			'label'   => 'sl-gg-client-secret',
 			'filters' => ['string', 'trim'],
+			'class'   => 'uk-input',
 			'showOn'  => 'googleLogin:Y',
 		],
 	],
