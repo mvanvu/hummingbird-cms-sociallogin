@@ -105,4 +105,9 @@ class SocialLogin extends Plugin
 	{
 		Console::getInstance()->composer('install', __DIR__);
 	}
+
+	public function update()
+	{
+		Console::getInstance()->composer('update', __DIR__);
+	}
 }
