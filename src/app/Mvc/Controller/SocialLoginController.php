@@ -202,7 +202,6 @@ class SocialLoginController extends Controller
 				'email'    => $email,
 				'username' => $email,
 				'password' => $this->security->hash($id . ':' . $name . ':' . $email),
-				'role'     => 'R',
 				'active'   => 'Y',
 				'token'    => null,
 				'params'   => [
