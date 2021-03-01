@@ -2,17 +2,40 @@
 
 namespace App\Plugin\Cms;
 
+use App\Factory\WebApplication;
 use App\Helper\Console;
+use App\Helper\Router;
 use App\Helper\State;
 use App\Helper\Text;
 use App\Helper\Uri;
 use App\Plugin\Plugin;
 use Facebook\Facebook;
 use Google_Client;
-use Phalcon\Mvc\Router;
 
 class SocialLogin extends Plugin
 {
+	public function onBootCms(WebApplication $app)
+	{
+		$router = Router::getInstance();
+		$router->add('/social-login/fb-callback/:params',
+			[
+				'controller' => 'social_login',
+				'action'     => 'callback',
+				'provider'   => 'facebook',
+				'params'     => 1,
+			]
+		);
+
+		$router->add('/social-login/gg-callback/:params',
+			[
+				'controller' => 'social_login',
+				'action'     => 'callback',
+				'provider'   => 'google',
+				'params'     => 1,
+			]
+		);
+	}
+
 	public function onAfterLoginForm()
 	{
 		State::set('socialLoginUriParams',
@@ -79,27 +102,6 @@ class SocialLogin extends Plugin
 		$client->addScope('profile');
 
 		return $client;
-	}
-
-	public function onInitRouter(Router $router)
-	{
-		$router->add('/social-login/fb-callback/:params',
-			[
-				'controller' => 'social_login',
-				'action'     => 'callback',
-				'provider'   => 'facebook',
-				'params'     => 1,
-			]
-		);
-
-		$router->add('/social-login/gg-callback/:params',
-			[
-				'controller' => 'social_login',
-				'action'     => 'callback',
-				'provider'   => 'google',
-				'params'     => 1,
-			]
-		);
 	}
 
 	public function install()
